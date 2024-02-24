@@ -4,6 +4,17 @@ using System.Data.SqlClient;
 
 namespace Mystore.Pages.Clients
 {
+    public class ClientInfo
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string email { get; set; }
+        public string phone { get; set; }
+        public string address { get; set; }
+
+        public string created_at { get; set; }
+
+    }
     public class IndexModel : PageModel
     {
         public List<ClientInfo> ListClients = new List<ClientInfo>();
@@ -48,15 +59,5 @@ namespace Mystore.Pages.Clients
         }
     }
 
-    public class ClientInfo
-    {
-        public string id { get; set; }
-        public string name { get; set; }
-        public string email { get; set; }
-        public string phone { get; set; }
-        public string address { get; set; }
-
-        public string created_at { get; set;}
-
-    }
+    
 }

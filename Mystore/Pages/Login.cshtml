@@ -15,11 +15,17 @@
         Password:
         <input name="fieldPwd" type="password" class="form-control" />
         <br />
-        <br />
+        
+        @if (@Model.Msg.Length > 0)
+        {
+            <div class="alert alert-warning alert-dismissible fade show role='alert'">
+                <strong>@Model.Msg</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
         <button type="submit" asp-page-handler="Login" class="btn btn-primary">Login</button>
-        <label>
-            @Model.Msg
-        </label>
-      
+
+        
     </form>
 </div>
