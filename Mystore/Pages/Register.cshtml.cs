@@ -1,31 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using __NameSpace__.Pages;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-
-#region ForSignIn
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Mystore.Pages.Clients;
 using System.Data.SqlClient;
-// sample --> https://gist.github.com/isdaviddong/8c42a0e226a33131d5af6ab4514e960e
-#endregion
 
-namespace __NameSpace__.Pages
+namespace Mystore.Pages
 {
+    public class RegisterModel : PageModel
+    {
 
-    public class Users
-    {
-        public int UserId { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
-    }
-    
-    public class LoginModel : PageModel
-    {
         private readonly string _connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Mystore;Integrated Security=True";
         public string Msg = "";
         [BindProperty]
@@ -34,17 +17,12 @@ namespace __NameSpace__.Pages
         [BindProperty]
         public string fieldPwd { get; set; }
 
-        public IActionResult OnGet()
+        public void OnGet()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                HttpContext.SignOutAsync();
-                return Redirect("/Login");
-            }
-            return null;
         }
-        
-        public async Task<IActionResult> OnPostLogin()
+
+
+        public async Task<IActionResult> OnPost()
         {
             try
             {
@@ -52,10 +30,18 @@ namespace __NameSpace__.Pages
 
                 if (user != null)
                 {
-                    await SignInUserAsync(user.UserName);
-
-                    return Redirect("/index");
+                    //await SignInUserAsync(user.UserName);
+                    Msg = $"User Existed!!";
+                    return Page();
                 }
+                else
+                {
+                    await CreateUserToDatabaseAsync();
+                }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Exception: {ex.Message}");
             }
             catch (Exception ex)
             {
@@ -63,11 +49,28 @@ namespace __NameSpace__.Pages
                 Console.WriteLine("Exception: " + ex.ToString());
             }
 
-            Msg = $"User Not Exist!!";
-            return Page();
+            Msg = $"User Created!!";
+            return Redirect("/Login");
         }
 
-        private async Task<Users> GetUserFromDatabaseAsync()
+        private async Task CreateUserToDatabaseAsync()
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                String sql = "INSERT INTO Users " + "(UserName, Password) VALUES " + "(@UserName, @Password);";
+
+                using (SqlCommand command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@UserName", fieldAccount);
+                    command.Parameters.AddWithValue("@Password", fieldPwd);                 
+
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+            private async Task<Users> GetUserFromDatabaseAsync()
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
@@ -98,28 +101,6 @@ namespace __NameSpace__.Pages
             }
 
             return null;
-        }
-
-        private async Task SignInUserAsync(string userName)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, userName),
-                new Claim("FullName", userName),
-                new Claim(ClaimTypes.Role, "nobody"),
-            };
-
-            var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
         }
     }
 }
